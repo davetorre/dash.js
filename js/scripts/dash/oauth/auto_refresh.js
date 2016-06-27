@@ -5,7 +5,7 @@ namespace('Dash.OAuth');
 
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
-  Dash.OAuth.AutoRefresh = (function() {
+  var buildAutoRefresh = function (TokenAccessor, Storage, AccessRequester) {
     function AutoRefresh(appId, urlGenerator, shouldShowCallback) {
       this.appId = appId;
       this.urlGenerator = urlGenerator;
@@ -21,7 +21,7 @@ namespace('Dash.OAuth');
     AutoRefresh.prototype.register = function() {
       var timeInSeconds, timeoutInMilliseconds,
         _this = this;
-      timeInSeconds = Dash.OAuth.TokenAccessor.getExpiresIn(this.appId);
+      timeInSeconds = TokenAccessor.getExpiresIn(this.appId);
       timeoutInMilliseconds = timeInSeconds * 1000;
       this.timeoutId = Dash.Browser.setTimeout((function() {
         return _this.trigger();
@@ -39,10 +39,10 @@ namespace('Dash.OAuth');
 
     AutoRefresh.prototype.renderModal = function() {
       var _this = this;
-      Dash.OAuth.TokenAccessor.expire(this.appId);
-      Dash.OAuth.Cookie.set('isAutoRefresh', 'true', 10);
+      TokenAccessor.expire(this.appId);
+      Storage.set('isAutoRefresh', 'true', 10);
       var urlAndState = this.urlGenerator.generate();
-      (new Dash.OAuth.AccessRequester()).storeState(urlAndState.state);
+      (new AccessRequester()).storeState(urlAndState.state);
       this.modal = this.createModal(urlAndState.url);
       this.modal.render();
       this.refreshPageTimeoutId = Dash.Browser.setTimeout(function(){_this.refreshLocation(urlAndState.url);}, this.maxWaitForToken);
@@ -58,12 +58,12 @@ namespace('Dash.OAuth');
     };
 
     AutoRefresh.prototype.refreshLocation = function(url) {
-      Dash.OAuth.AutoRefresh.expireFlag();
+      AutoRefresh.expireFlag();
       return Dash.Browser.Location.change(url);
     };
 
     AutoRefresh.prototype.closeModal = function() {
-      if (Dash.OAuth.TokenAccessor.get(this.appId) !== undefined) {
+      if (TokenAccessor.get(this.appId) !== undefined) {
         this.cleanUp();
         return this.register();
       }
@@ -86,15 +86,18 @@ namespace('Dash.OAuth');
     };
 
     AutoRefresh.expireFlag = function() {
-      return Dash.OAuth.Cookie.expire('isAutoRefresh');
+      return Storage.expire('isAutoRefresh');
     };
 
     AutoRefresh.isFlagSet = function() {
-      return (Dash.OAuth.Cookie.get('isAutoRefresh') !== undefined);
+      return (Storage.get('isAutoRefresh') !== undefined);
     };
 
     return AutoRefresh;
+  };
 
-  })();
+  Dash.OAuth.AutoRefresh = buildAutoRefresh(Dash.OAuth.TokenAccessor, Dash.OAuth.Cookie, Dash.OAuth.AccessRequester);
+
+  Dash.OAuth.LocalStorageAutoRefresh = buildAutoRefresh(Dash.OAuth.LocalStorageTokenAccessor, Dash.OAuth.LocalStorage, Dash.OAuth.LocalStorageAccessRequester);
 
 }).call(this);

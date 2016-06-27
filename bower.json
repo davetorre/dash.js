@@ -3,7 +3,8 @@
   "version": "1.1.1",
   "dependencies": {
     "cookies-js": "~0.3.1",
-    "uuid-js": "~0.7.4"
+    "uuid-js": "~0.7.4",
+    "store-js": "~1.3.20"
   },
   "devDependencies": {
     "jquery": "2.1.0",

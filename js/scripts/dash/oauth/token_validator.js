@@ -1,32 +1,39 @@
 namespace('Dash.OAuth');
 
-(function(Cookie) {
+(function() {
   'use strict';
 
-  Dash.OAuth.TokenValidator = function(state, token, expiresIn) {
-    this.expiration = expiresIn;
-    this.state = state;
-    this.token = token;
+  var buildValidator = function(Storage) {
 
-    this.isValidState = function(state) {
-      return Cookie.get(Cookie.names.state) === this.state;
-    };
+    return function(state, token, expiresIn) {
+      this.expiration = expiresIn;
+      this.state = state;
+      this.token = token;
 
-    this.storeToken = function () {
-      return Cookie.set(Cookie.names.token, this.token, {expires: this.expiration});
-    };
+      this.isValidState = function(state) {
+        return Storage.get(Storage.names.state) === this.state;
+      };
 
-    this.removeToken = function() {
-      return Cookie.expire(Cookie.names.token);
-    };
+      this.storeToken = function () {
+        return Storage.set(Storage.names.token, this.token, {expires: this.expiration});
+      };
 
-    this.storedToken = function() {
-      return Cookie.get(Cookie.names.token);
-    };
+      this.removeToken = function() {
+        return Storage.expire(Storage.names.token);
+      };
 
-    this.hasStoredToken = function() {
-      return Cookie.get(Cookie.names.token) !== undefined;
+      this.storedToken = function() {
+        return Storage.get(Storage.names.token);
+      };
+
+      this.hasStoredToken = function() {
+        return Storage.get(Storage.names.token) !== undefined;
+      };
     };
   };
 
-}(Dash.OAuth.Cookie));
+  Dash.OAuth.TokenValidator = buildValidator(Dash.OAuth.Cookie);
+
+  Dash.OAuth.LocalStorageTokenValidator = buildValidator(Dash.OAuth.LocalStorage);
+
+}());
